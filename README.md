@@ -30,17 +30,3 @@ Backend (API):
 
 Deployment:
 + Netlify
-
-## 📐 Architecture
-
-The application follows a secure client-server pattern where the frontend never directly exposes the API key.
-
-The React Client makes a request to the relative path: /api/v1/environment/current?city=...
-
-Netlify's Redirects intercept this path and route it to the Netlify Serverless Function (get-current.js).
-
-The Serverless Function securely reads the OWM_API_KEY from Netlify's environment, calls the external OpenWeatherMap service, aggregates the data, and sends a clean JSON response back to the client.
-
-Key: OWM_API_KEY
-
-Value: [Your Secret Key]
