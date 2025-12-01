@@ -6,8 +6,8 @@
 const fetch = require('node-fetch').default || require('node-fetch');
 
 // API Endpoints
-const OWM_API_KEY = process.env.OWM_API_KEY;
-const OWM_ONE_CALL_URL = "https://api.openweathermap.org/data/3.0/onecall";
+const OWM_API_KEY = process.env.OWM_API_KEY; 
+const OWM_ONE_CALL_URL = "https://api.openweathermap.org/data/3.0/onecall"; 
 const OWM_GEO_URL = "http://api.openweathermap.org/geo/1.0/direct";
 
 exports.handler = async (event) => {
@@ -31,19 +31,19 @@ exports.handler = async (event) => {
         }
 
         const { lat, lon } = geoData[0];
-
+        
         // 2. Fetch Forecast Data
         const forecastRes = await fetch(`${OWM_ONE_CALL_URL}?lat=${lat}&lon=${lon}&appid=${OWM_API_KEY}&units=imperial&exclude=current,minutely,hourly,alerts`);
         const forecastDataRaw = await forecastRes.json();
-
+        
         if (!forecastRes.ok) {
             return { statusCode: 500, body: JSON.stringify({ error: "Failed to fetch forecast data from One Call API." }) };
         }
 
         // 3. Process Daily Forecast Array (7 days - Identical to server.js processing)
         const dailyForecasts = forecastDataRaw.daily.slice(0, 7).map(day => {
-            const date = new Date(day.dt * 1000);
-            const aqiIndex = day.air_pollution && day.air_pollution.list.length > 0 ? day.air_pollution.list[0].main.aqi : 2;
+            const date = new Date(day.dt * 1000); 
+            const aqiIndex = day.air_pollution && day.air_pollution.list.length > 0 ? day.air_pollution.list[0].main.aqi : 2; 
             const aqiStatusMap = { 1: "Good", 2: "Moderate", 3: "Unhealthy", 4: "Unsafe", 5: "Hazardous" };
 
             return {
