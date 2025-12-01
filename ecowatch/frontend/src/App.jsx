@@ -2,9 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Cloud, Wind, Droplet, Thermometer, AlertTriangle, Leaf, Search, Sun, CloudRain, Zap, CloudFog, TrendingUp, ChevronDown, ChevronUp, Sunrise, Check, Snowflake } from 'lucide-react';
 
 // --- Configuration ---
-// The URL of the Node.js Express server running locally on port 8080.
-const API_URL = 'http://localhost:8080/api/v1/environment/current';
-const FORECAST_API_URL = 'http://localhost:8080/api/v1/environment/forecast'; // Forecast Endpoint
+const API_URL = '/api/v1/environment/current'; 
+const FORECAST_API_URL = '/api/v1/environment/forecast';
 
 // Define the initial structure of the data for loading state
 const initialDashboardData = {
@@ -493,3 +492,4 @@ const App = () => {
 };
 
 export default App;
+
