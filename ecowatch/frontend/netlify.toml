@@ -1,29 +1,15 @@
 [build]
 
-Assuming the root of your repository (where Netlify starts) contains the 'frontend' and 'functions' folders.
-
-FIX: Setting the base to account for the nested structure you likely have, ensuring Netlify finds the React app.
-
 base    = "ecowatch/frontend"
-
-Functions directory (relative to the repository root, where the functions folder is located)
 
 functions = "functions"
 
-Build command to execute (relative to the base directory)
-
 command = "npm run build"
-
-Publish directory (relative to the base directory)
 
 publish = "build"
 
-Configuration for Functions Runtime Environment
-
 [functions]
 node_bundler = "esbuild"
-
-CRITICAL: API Endpoint Rewrites (for Netlify to call the functions securely)
 
 [[redirects]]
 from = "/api/v1/environment/current"
@@ -35,9 +21,8 @@ from = "/api/v1/environment/forecast"
 to = "/.netlify/functions/get-forecast"
 status = 200
 
-OPTIONAL: Single Page App (SPA) Fallback for React routing
-
 [[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200
+
