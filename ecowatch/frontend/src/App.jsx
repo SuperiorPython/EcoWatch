@@ -344,7 +344,6 @@ const App = () => {
       {/* Header and Search */}
       <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 mb-8">
         <h1 className="text-3xl font-bold text-center text-gray-800">EcoWatch Environmental Dashboard</h1>
-        <p className="text-center text-sm text-gray-500 mt-1 mb-6">Full-Stack Demo: React Frontend calling Node.js Backend.</p>
 
         <form onSubmit={handleSubmit} className="flex max-w-xl mx-auto">
           <input
@@ -492,4 +491,5 @@ const App = () => {
 };
 
 export default App;
+
 
