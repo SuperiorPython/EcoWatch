@@ -293,7 +293,7 @@ const App = () => {
       console.error("Fetch error:", err);
       // ENHANCED ERROR REPORTING: Check for specific "Location not found" message
       if (err.message.includes('Location not found')) {
-        setError("Location not found. Please verify spelling or use the format: City, State/Region Code, Country Code (e.g., 'Paris, FR').");
+        setError("Location not found. Please verify spelling or use the format: City, State/Region Code, Country Code (e.g., 'Chicago, IL, US').");
       } else if (err.message.includes('Failed to fetch')) {
         setError('Could not connect to Node.js backend server. Please ensure server.js is running on port 8080.');
       } else {
@@ -491,5 +491,6 @@ const App = () => {
 };
 
 export default App;
+
 
 
