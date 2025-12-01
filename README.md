@@ -20,29 +20,16 @@ Robust Error Handling: Specific error messages guide the user on how to correctl
 
 ## 💻 Tech Stack
 
-Component
+Frontend (Client):
++ React
++ JavaScript
 
-Technology
+Backend (API):
++ Node.js
++ Netlify Functions
 
-Role
-
-Frontend (Client)
-
-React, JavaScript
-
-User interface, state management, C/F unit conversion, data presentation, and dynamic styling (Tailwind CDN).
-
-Backend (API)
-
-Node.js, Netlify Functions
-
-API Proxy: Geocodes location, securely fetches data from multiple OWM endpoints, and formats the response for the frontend.
-
-Deployment
-
-Netlify
-
-Hosts the React client and executes the Serverless Functions.
+Deployment:
++ Netlify
 
 ## 📐 Architecture
 
