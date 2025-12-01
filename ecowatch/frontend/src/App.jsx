@@ -3,8 +3,8 @@ import { Cloud, Wind, Droplet, Thermometer, AlertTriangle, Leaf, Search, Sun, Cl
 
 // --- Configuration ---
 // The URL of the Node.js Express server running locally on port 8080.
-const API_URL = '/api/v1/environment/current'; 
-const FORECAST_API_URL = '/api/v1/environment/forecast'; // Forecast Endpoint
+const API_URL = 'http://localhost:8080/api/v1/environment/current';
+const FORECAST_API_URL = 'http://localhost:8080/api/v1/environment/forecast'; // Forecast Endpoint
 
 // Define the initial structure of the data for loading state
 const initialDashboardData = {
@@ -94,26 +94,26 @@ const getWeatherBackground = (condition) => {
 const AqiBar = ({ aqiIndex, status }) => {
     // AQI Index 1-5 maps directly to a height percentage.
     const HEIGHT_UNIT = 20; // 100% / 5 levels
-    const fillHeight = aqiIndex * HEIGHT_UNIT; 
+    const fillHeight = aqiIndex * HEIGHT_UNIT;
 
     let fillColorClass;
     let pointerColorClass;
-    
+
     switch (aqiIndex) {
         case 1: fillColorClass = 'bg-green-500'; pointerColorClass = 'text-green-600'; break;
         case 2: fillColorClass = 'bg-yellow-500'; pointerColorClass = 'text-yellow-600'; break;
         case 3: fillColorClass = 'bg-red-500'; pointerColorClass = 'text-red-600'; break;
         case 4: fillColorClass = 'bg-purple-500'; pointerColorClass = 'text-purple-600'; break;
         case 5: fillColorClass = 'bg-gray-900'; pointerColorClass = 'text-gray-900'; break;
-        default: fillColorClass = 'bg-gray-400'; pointerColorClass = 'text-gray-500'; 
+        default: fillColorClass = 'bg-gray-400'; pointerColorClass = 'text-gray-500';
     }
-    
+
     // Calculate vertical position for pointer and text
     // We position the status text absolutely to the left of the bar.
 
     return (
         <div className="flex justify-start items-end h-36 w-full mb-4">
-            
+
             {/* Status Labels (Aligned vertically with their corresponding level on the right) */}
             <div className="relative h-full flex flex-col justify-end w-2/3 mr-2">
                 {/* AQI Labels 1-5, aligned with the bottom of each 20% block */}
@@ -121,7 +121,7 @@ const AqiBar = ({ aqiIndex, status }) => {
                     const level = 5 - index;
                     const isCurrent = level === aqiIndex;
                     // Calculate the position to center the text in the 20% vertical block
-                    const bottomPercent = `${(index) * 20 + 10}%`; 
+                    const bottomPercent = `${(index) * 20 + 10}%`;
 
                     return (
                         <div
@@ -138,7 +138,7 @@ const AqiBar = ({ aqiIndex, status }) => {
             {/* The Bar Container (1/3 width) */}
             <div className="relative w-1/3 h-full bg-gray-200 rounded-lg overflow-hidden shadow-inner">
                 {/* Dynamic Fill Level */}
-                <div 
+                <div
                     className={`absolute bottom-0 left-0 w-full ${fillColorClass} transition-all duration-700 ease-out`}
                     style={{ height: `${fillHeight}%` }}
                 >
@@ -153,7 +153,7 @@ const AqiBar = ({ aqiIndex, status }) => {
                 )}
             </div>
 
-            
+
             {/* Fallback for unavailable data */}
             {aqiIndex === null && (
                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-gray-500">
@@ -190,10 +190,10 @@ const DetailRow = ({ icon: Icon, label, value }) => (
 const ForecastDay = ({ day, unit }) => { // unit prop added
     const Icon = getWeatherIcon(day.weather.condition);
     const aqiColor = day.expectedAqiStatus.toLowerCase() === 'good' ? 'text-green-600' : 'text-yellow-600';
-    
+
     // Conversion logic for forecast
     const convertToC = (temp) => ((temp - 32) * 5 / 9);
-    
+
     const highTemp = unit === 'C' ? convertToC(day.weather.highF).toFixed(0) : day.weather.highF;
     const lowTemp = unit === 'C' ? convertToC(day.weather.lowF).toFixed(0) : day.weather.lowF;
     const displayUnit = unit === 'C' ? '°C' : '°F';
@@ -215,16 +215,16 @@ const ForecastDay = ({ day, unit }) => { // unit prop added
 const App = () => {
   const [data, setData] = useState(initialDashboardData);
   const [forecastData, setForecastData] = useState(initialForecastData); // NEW STATE
-  
+
   // FIX: Update default value to explicitly show the required format
-  const [locationInput, setLocationInput] = useState('New York, NY, US'); 
-  
+  const [locationInput, setLocationInput] = useState('New York, NY, US');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // NEW STATE: Unit toggle
   const [unit, setUnit] = useState('F'); // 'F' for Fahrenheit, 'C' for Celsius
-  
+
   // Conversion function
   const convertToC = (temp) => ((temp - 32) * 5 / 9);
 
@@ -252,7 +252,7 @@ const App = () => {
 
     return 'from-gray-50 to-gray-100 text-gray-900'; // Default fallback
   };
-  
+
   // New function to fetch 7-day forecast
   const fetchForecast = useCallback(async (loc) => {
     try {
@@ -276,22 +276,19 @@ const App = () => {
     setLoading(true);
     setError(null);
     try {
-      // NOTE: API_URL is now a relative path for Netlify compatibility
       const response = await fetch(`${API_URL}?city=${loc}`);
-      
+
       if (!response.ok) {
-        // Since the backend now correctly returns 404/500 with a JSON body, we read it
-        const errorBody = await response.json();
-        throw new Error(errorBody.error || `API Error! Status: ${response.status}`);
+        throw new Error(`API Error! Status: ${response.status}`);
       }
 
       const json = await response.json();
-      
-      json.lastUpdated = new Date(json.lastUpdated).toLocaleTimeString(); 
+
+      json.lastUpdated = new Date(json.lastUpdated).toLocaleTimeString();
       setData(json);
 
       // Successfully fetched current data, now fetch forecast
-      fetchForecast(loc); 
+      fetchForecast(loc);
 
     } catch (err) {
       console.error("Fetch error:", err);
@@ -304,7 +301,7 @@ const App = () => {
         // Display the specific message returned by the backend's catch block
         setError(`Data fetch failed: ${err.message}`);
       }
-      setData(initialDashboardData); 
+      setData(initialDashboardData);
       setForecastData([]); // Clear forecast on error
 
     } finally {
@@ -316,7 +313,7 @@ const App = () => {
   // Initial data load when component mounts
   useEffect(() => {
     fetchCurrentConditions(locationInput);
-  }, [fetchCurrentConditions]); 
+  }, [fetchCurrentConditions]);
 
   // Handler for form submission
   const handleSubmit = (e) => {
@@ -330,11 +327,11 @@ const App = () => {
 
   // Apply unit conversion logic to current temperature
   const currentTempF = weather.temperatureF;
-  const displayTemp = unit === 'C' && currentTempF !== null 
-                      ? convertToC(currentTempF).toFixed(1) 
+  const displayTemp = unit === 'C' && currentTempF !== null
+                      ? convertToC(currentTempF).toFixed(1)
                       : (currentTempF !== null ? currentTempF.toFixed(1) : '--');
   const displayUnit = unit === 'C' ? '°C' : '°F';
-  
+
   const formatWind = (wind) => wind !== null ? wind.toFixed(1) : '--';
 
   const WeatherIcon = getWeatherIcon(weather.condition);
@@ -386,9 +383,9 @@ const App = () => {
       {/* Error Message Display */}
       {error && (
         <div className="w-full max-w-4xl p-4 mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg shadow-md">
-          <p className="font-semibold">Error!</p>
+          <p className="font-semibold">Connection Required!</p>
           <p className="text-sm">{error}</p>
-          <p className="text-xs mt-2">To fix: Ensure your backend is running and the format is correct.</p>
+          <p className="text-xs mt-2">To fix: Go to the 'backend/' folder, ensure API key is set, and run `node server.js`.</p>
         </div>
       )}
 
@@ -404,15 +401,15 @@ const App = () => {
                   <div className="flex flex-col items-start">
                       {/* Unit Toggle */}
                       <div className="flex items-center bg-gray-100 rounded-xl p-1 border border-gray-300 mb-2">
-                          <button 
-                              onClick={() => setUnit('C')} 
+                          <button
+                              onClick={() => setUnit('C')}
                               className={`px-2 py-1 text-xs font-bold rounded-lg transition-colors ${unit === 'C' ? 'bg-blue-500 text-white shadow' : 'text-gray-600 hover:bg-gray-200'}`}
                               aria-pressed={unit === 'C'}
                           >
                               °C
                           </button>
-                          <button 
-                              onClick={() => setUnit('F')} 
+                          <button
+                              onClick={() => setUnit('F')}
                               className={`px-2 py-1 text-xs font-bold rounded-lg transition-colors ${unit === 'F' ? 'bg-blue-500 text-white shadow' : 'text-gray-600 hover:bg-gray-200'}`}
                               aria-pressed={unit === 'F'}
                           >
@@ -420,7 +417,7 @@ const App = () => {
                           </button>
                       </div>
                       {/* Large Temperature Display */}
-                      <span className="text-6xl font-extrabold text-blue-800">
+                      <span className="text-4xl font-extrabold text-blue-800">
                           {displayTemp}{displayUnit}
                       </span>
                   </div>
