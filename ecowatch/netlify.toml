@@ -1,49 +1,34 @@
 [build]
 
-1. Base Directory: Tells Netlify where the main code repository starts
-
-(Netlify will cd into 'frontend' before running the build command)
+1. Base Directory: Tells Netlify to enter the 'frontend' directory
 
 base    = "frontend"
 
-2. Build Command: Runs the script defined in frontend/package.json
+2. Functions Directory: NOW INSIDE the base directory
+
+functions = "functions"
+
+3. Build Command:
 
 command = "npm run build"
 
-3. Publish Directory: Where the compiled files (the dashboard) are located
+4. Publish Directory:
 
 publish = "frontend/build"
-
-4. Functions Directory: Tells Netlify where to find the serverless function code
-
-functions = "functions"
 
 Configuration for Functions Runtime Environment
 
 [functions]
-
-Use esbuild for faster function bundling
-
 node_bundler = "esbuild"
 
-CRITICAL STEP: API Endpoint Rewrites
-
-This tells Netlify to intercept requests to /api/v1/environment/* and forward
-
-them to the corresponding Serverless Function handler.
+CRITICAL STEP: API Endpoint Rewrites (Unchanged, but necessary)
 
 [[redirects]]
-
-Redirects the /api/v1/environment/current call to the get-current function
-
 from = "/api/v1/environment/current"
 to = "/.netlify/functions/get-current"
 status = 200
 
 [[redirects]]
-
-Redirects the /api/v1/environment/forecast call to the get-forecast function
-
 from = "/api/v1/environment/forecast"
 to = "/.netlify/functions/get-forecast"
 status = 200
