@@ -11,8 +11,11 @@ const OWM_API_KEY = process.env.OWM_API_KEY;
 const OWM_ONE_CALL_URL = "https://api.openweathermap.org/data/3.0/onecall"; 
 const OWM_GEO_URL = "http://api.openweathermap.org/geo/1.0/direct";
 const OWM_AIR_POLLUTION_URL = "http://api.openweathermap.org/data/2.5/air_pollution";
+// NEW: Geocoding URL for ZIP codes
+const OWM_ZIP_GEO_URL = "http://api.openweathermap.org/geo/1.0/zip"; 
 
-// --- Utility Function: Extracts the clean query string ---
+
+// --- Utility Function: Extracts the clean query string (For City only) ---
 function getCleanGeoQuery(locationIdentifier) {
     // This is the input: e.g., "Arlington, VA, US"
     const parts = locationIdentifier.split(',').map(p => p.trim());
@@ -26,40 +29,73 @@ function getCleanGeoQuery(locationIdentifier) {
 exports.handler = async (event) => {
     // Netlify provides query params in event.queryStringParameters
     const queryParams = event.queryStringParameters;
-    const city = queryParams.city;
+    const city = queryParams.city; // For city name (e.g., "Arlington, VA, US")
+    const zipCode = queryParams.zipCode; // For ZIP code (e.g., "90210" or "27401,US")
 
-    if (!city) {
-        return { statusCode: 400, body: JSON.stringify({ error: "Location (city) parameter is required." }) };
+    let locationQuery = null;
+    let isZip = false;
+
+    if (city && city.trim() !== '') {
+        locationQuery = city;
+        isZip = false;
+    } else if (zipCode && zipCode.trim() !== '') {
+        locationQuery = zipCode;
+        isZip = true;
+    } else {
+        return { statusCode: 400, body: JSON.stringify({ error: "Location (city or zipCode) parameter is required." }) };
     }
+
 
     try {
         if (!OWM_API_KEY) {
             return { statusCode: 500, body: JSON.stringify({ error: "API Key Missing. OWM_API_KEY must be set in Netlify Environment Variables." }) };
         }
 
-        // 1. Geocoding logic: Use the new utility to create the exact query string
-        const geoQuery = getCleanGeoQuery(city);
-        
-        const geoResponse = await fetch(`${OWM_GEO_URL}?q=${encodeURIComponent(geoQuery)}&limit=1&appid=${OWM_API_KEY}`);
-        const geoData = await geoResponse.json();
+        // --- 1. Geocoding logic: Determine lat/lon based on query type ---
+        let geoResponse;
+        let geoData;
+        let locationNotFoundMessage = null;
 
-        if (!geoResponse.ok || geoData.length === 0) {
-            return { statusCode: 404, body: JSON.stringify({ error: `404 Location not found for the search term: ${city}.` }) };
+        if (isZip) {
+            // ZIP code lookup (e.g., ?zip=27401,US)
+            // OWM requires ZIP code to be [zip],[country code]
+            const zipQuery = locationQuery.includes(',') ? locationQuery : `${locationQuery},US`;
+            geoResponse = await fetch(`${OWM_ZIP_GEO_URL}?zip=${encodeURIComponent(zipQuery)}&appid=${OWM_API_KEY}`);
+            geoData = await geoResponse.json();
+
+            // ZIP code lookup returns a single object {lat, lon} OR an error {cod, message}
+            if (!geoResponse.ok || !geoData.lat) {
+                locationNotFoundMessage = `404 Location not found for ZIP code: ${zipCode}.`;
+            }
+        } else {
+            // City name lookup (e.g., ?q=Greensboro,NC,US)
+            const geoQuery = getCleanGeoQuery(locationQuery);
+            geoResponse = await fetch(`${OWM_GEO_URL}?q=${encodeURIComponent(geoQuery)}&limit=1&appid=${OWM_API_KEY}`);
+            const geoArray = await geoResponse.json();
+            geoData = geoArray.length > 0 ? geoArray[0] : null;
+
+            if (!geoResponse.ok || geoData === null) {
+                locationNotFoundMessage = `404 Location not found for the search term: ${city}.`;
+            }
         }
         
-        // --- ASSEMBLY START ---
-        const { lat, lon, name, state, country } = geoData[0];
-        const displayLocation = (state && country) ? `${name}, ${state}, ${country}` : name;
-        
-        // ... (rest of the API fetching and assembly logic remains the same)
-        // ... (API calls for weather and AQI using lat/lon)
-        
-        // --- Placeholder for final return (rest of the function's logic is unchanged) ---
-        // Since the bulk of the logic remains the same, I will return the simplified handler 
-        // structure while ensuring the crucial GeoQuery fix is highlighted.
+        // Handle Geocoding errors
+        if (locationNotFoundMessage) {
+            return { statusCode: 404, body: JSON.stringify({ error: locationNotFoundMessage }) };
+        }
 
-        // ... (Original assembly logic from server.js continues here, using lat, lon, displayLocation)
+        // Use the common structure for lat/lon
+        const { lat, lon } = geoData; 
         
+        // Determine the location name for the display (City/State/Country)
+        let displayLocation;
+        if (isZip) {
+            displayLocation = `${geoData.name || locationQuery} (${geoData.zip})`;
+        } else {
+            displayLocation = (geoData.state && geoData.country) ? `${geoData.name}, ${geoData.state}, ${geoData.country}` : geoData.name;
+        }
+
+
         // --- 2. Fetch Weather Data ---
         const weatherRes = await fetch(`${OWM_ONE_CALL_URL}?lat=${lat}&lon=${lon}&appid=${OWM_API_KEY}&units=imperial&exclude=minutely,hourly,alerts`);
         const weatherDataRaw = await weatherRes.json();
