@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Cloud, Wind, Droplet, Thermometer, AlertTriangle, Leaf, Search, Sun, CloudRain, Zap, CloudFog, TrendingUp, ChevronDown, ChevronUp, Sunrise } from 'lucide-react';
+import { Cloud, Wind, Droplet, Thermometer, AlertTriangle, Leaf, Search, Sun, CloudRain, Zap, CloudFog, TrendingUp, ChevronDown, ChevronUp, Sunrise, Check, Snowflake } from 'lucide-react';
 
 // --- Configuration ---
 // The URL of the Node.js Express server running locally on port 8080.
-const API_URL = 'http://localhost:8080/api/v1/environment/current';
-const FORECAST_API_URL = 'http://localhost:8080/api/v1/environment/forecast'; // Forecast Endpoint
+const API_URL = '/api/v1/environment/current'; 
+const FORECAST_API_URL = '/api/v1/environment/forecast'; // Forecast Endpoint
 
 // Define the initial structure of the data for loading state
 const initialDashboardData = {
@@ -55,6 +55,7 @@ const getWeatherIcon = (condition) => {
     if (!condition) return Cloud;
     const lower = condition.toLowerCase();
     if (lower.includes('rain') || lower.includes('drizzle') || lower.includes('shower')) return CloudRain;
+    if (lower.includes('snow') || lower.includes('sleet')) return Snowflake; // Added Snowflake for snow/sleet
     if (lower.includes('thunderstorm') || lower.includes('lightning')) return Zap;
     if (lower.includes('clear') || lower.includes('sun')) return Sun;
     if (lower.includes('mist') || lower.includes('fog') || lower.includes('haze')) return CloudFog;
@@ -68,22 +69,22 @@ const getWeatherBackground = (condition) => {
     const lower = condition.toLowerCase();
 
     if (lower.includes('rain') || lower.includes('shower')) {
-        return 'bg-gray-400 text-gray-900';
+        return 'from-gray-400 to-gray-500 text-gray-900';
     }
     if (lower.includes('thunderstorm') || lower.includes('snow')) {
-        return 'bg-gray-600 text-white';
+        return 'from-gray-600 to-gray-700 text-white';
     }
     if (lower.includes('clear') || lower.includes('sun')) {
-        return 'bg-blue-200 text-gray-900';
+        return 'from-blue-200 to-white text-gray-900';
     }
     if (lower.includes('mist') || lower.includes('fog') || lower.includes('haze')) {
-        return 'bg-gray-200 text-gray-800';
+        return 'from-gray-200 to-white text-gray-800';
     }
     if (lower.includes('cloud') || lower.includes('overcast')) {
-        return 'bg-gray-300 text-gray-900';
+        return 'from-gray-300 to-gray-400 text-gray-900';
     }
 
-    return 'bg-gray-50 text-gray-900'; // Default fallback
+    return 'from-gray-50 to-gray-100 text-gray-900'; // Default fallback
 };
 
 
@@ -93,33 +94,34 @@ const getWeatherBackground = (condition) => {
 const AqiBar = ({ aqiIndex, status }) => {
     // AQI Index 1-5 maps directly to a height percentage.
     const HEIGHT_UNIT = 20; // 100% / 5 levels
-    const fillHeight = aqiIndex * HEIGHT_UNIT;
+    const fillHeight = aqiIndex * HEIGHT_UNIT; 
 
     let fillColorClass;
     let pointerColorClass;
-
+    
     switch (aqiIndex) {
         case 1: fillColorClass = 'bg-green-500'; pointerColorClass = 'text-green-600'; break;
         case 2: fillColorClass = 'bg-yellow-500'; pointerColorClass = 'text-yellow-600'; break;
         case 3: fillColorClass = 'bg-red-500'; pointerColorClass = 'text-red-600'; break;
         case 4: fillColorClass = 'bg-purple-500'; pointerColorClass = 'text-purple-600'; break;
         case 5: fillColorClass = 'bg-gray-900'; pointerColorClass = 'text-gray-900'; break;
-        default: fillColorClass = 'bg-gray-400'; pointerColorClass = 'text-gray-500';
+        default: fillColorClass = 'bg-gray-400'; pointerColorClass = 'text-gray-500'; 
     }
-
+    
     // Calculate vertical position for pointer and text
     // We position the status text absolutely to the left of the bar.
 
     return (
         <div className="flex justify-start items-end h-36 w-full mb-4">
-
+            
             {/* Status Labels (Aligned vertically with their corresponding level on the right) */}
             <div className="relative h-full flex flex-col justify-end w-2/3 mr-2">
                 {/* AQI Labels 1-5, aligned with the bottom of each 20% block */}
                 {['Hazardous', 'Unsafe', 'Unhealthy', 'Moderate', 'Good'].map((label, index) => {
                     const level = 5 - index;
                     const isCurrent = level === aqiIndex;
-                    const bottomPercent = `${(index) * 20 + 10}%`; // Center of the segment
+                    // Calculate the position to center the text in the 20% vertical block
+                    const bottomPercent = `${(index) * 20 + 10}%`; 
 
                     return (
                         <div
@@ -136,7 +138,7 @@ const AqiBar = ({ aqiIndex, status }) => {
             {/* The Bar Container (1/3 width) */}
             <div className="relative w-1/3 h-full bg-gray-200 rounded-lg overflow-hidden shadow-inner">
                 {/* Dynamic Fill Level */}
-                <div
+                <div 
                     className={`absolute bottom-0 left-0 w-full ${fillColorClass} transition-all duration-700 ease-out`}
                     style={{ height: `${fillHeight}%` }}
                 >
@@ -151,7 +153,7 @@ const AqiBar = ({ aqiIndex, status }) => {
                 )}
             </div>
 
-
+            
             {/* Fallback for unavailable data */}
             {aqiIndex === null && (
                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-gray-500">
@@ -185,15 +187,23 @@ const DetailRow = ({ icon: Icon, label, value }) => (
 );
 
 // Forecast Day Renderer Component
-const ForecastDay = ({ day }) => {
+const ForecastDay = ({ day, unit }) => { // unit prop added
     const Icon = getWeatherIcon(day.weather.condition);
     const aqiColor = day.expectedAqiStatus.toLowerCase() === 'good' ? 'text-green-600' : 'text-yellow-600';
+    
+    // Conversion logic for forecast
+    const convertToC = (temp) => ((temp - 32) * 5 / 9);
+    
+    const highTemp = unit === 'C' ? convertToC(day.weather.highF).toFixed(0) : day.weather.highF;
+    const lowTemp = unit === 'C' ? convertToC(day.weather.lowF).toFixed(0) : day.weather.lowF;
+    const displayUnit = unit === 'C' ? '°C' : '°F';
+
 
     return (
         <div className="flex flex-col items-center p-4 bg-white border border-gray-200 rounded-xl shadow-md transition duration-200 hover:shadow-lg">
             <p className="text-sm font-semibold text-gray-600">{day.dayOfWeek}</p>
             <Icon size={32} className="text-blue-500 my-2" />
-            <p className="text-lg font-bold text-gray-800">{day.weather.highF}° / {day.weather.lowF}°</p>
+            <p className="text-lg font-bold text-gray-800">{highTemp}{displayUnit} / {lowTemp}{displayUnit}</p>
             <p className="text-xs text-gray-500">{day.weather.condition}</p>
             <p className={`text-xs mt-1 font-medium ${aqiColor}`}>AQI: {day.expectedAqiStatus}</p>
         </div>
@@ -205,9 +215,19 @@ const ForecastDay = ({ day }) => {
 const App = () => {
   const [data, setData] = useState(initialDashboardData);
   const [forecastData, setForecastData] = useState(initialForecastData); // NEW STATE
-  const [locationInput, setLocationInput] = useState('Greensboro, NC, US'); // Set reliable default
+  
+  // FIX: Update default value to explicitly show the required format
+  const [locationInput, setLocationInput] = useState('New York, NY, US'); 
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // NEW STATE: Unit toggle
+  const [unit, setUnit] = useState('F'); // 'F' for Fahrenheit, 'C' for Celsius
+  
+  // Conversion function
+  const convertToC = (temp) => ((temp - 32) * 5 / 9);
+
 
   // Maps weather condition to smooth background gradient
   const getWeatherBackground = (condition) => {
@@ -215,30 +235,32 @@ const App = () => {
     const lower = condition.toLowerCase();
 
     if (lower.includes('rain') || lower.includes('shower')) {
-        return 'bg-gray-400 text-gray-900';
+        return 'from-gray-400 to-gray-500 text-gray-900';
     }
     if (lower.includes('thunderstorm') || lower.includes('snow')) {
-        return 'bg-gray-600 text-white';
+        return 'from-gray-600 to-gray-700 text-white';
     }
     if (lower.includes('clear') || lower.includes('sun')) {
-        return 'bg-blue-200 text-gray-900';
+        return 'from-blue-200 to-white text-gray-900';
     }
     if (lower.includes('mist') || lower.includes('fog') || lower.includes('haze')) {
-        return 'bg-gray-200 text-gray-800';
+        return 'from-gray-200 to-white text-gray-800';
     }
     if (lower.includes('cloud') || lower.includes('overcast')) {
-        return 'bg-gray-300 text-gray-900';
+        return 'from-gray-300 to-gray-400 text-gray-900';
     }
 
-    return 'bg-gray-50 text-gray-900'; // Default fallback
+    return 'from-gray-50 to-gray-100 text-gray-900'; // Default fallback
   };
-
+  
   // New function to fetch 7-day forecast
   const fetchForecast = useCallback(async (loc) => {
     try {
         const response = await fetch(`${FORECAST_API_URL}?city=${loc}`);
         if (!response.ok) {
-            throw new Error(`Forecast API Error! Status: ${response.status}`);
+            // FIX: If the forecast endpoint returns an error, we read the body to get the specific message
+            const errorBody = await response.json();
+            throw new Error(errorBody.error || `Forecast API Error! Status: ${response.status}. Check server console.`);
         }
         const json = await response.json();
         setForecastData(json);
@@ -254,28 +276,35 @@ const App = () => {
     setLoading(true);
     setError(null);
     try {
+      // NOTE: API_URL is now a relative path for Netlify compatibility
       const response = await fetch(`${API_URL}?city=${loc}`);
-
+      
       if (!response.ok) {
-        throw new Error(`API Error! Status: ${response.status}`);
+        // Since the backend now correctly returns 404/500 with a JSON body, we read it
+        const errorBody = await response.json();
+        throw new Error(errorBody.error || `API Error! Status: ${response.status}`);
       }
 
       const json = await response.json();
-
-      json.lastUpdated = new Date(json.lastUpdated).toLocaleTimeString();
+      
+      json.lastUpdated = new Date(json.lastUpdated).toLocaleTimeString(); 
       setData(json);
 
       // Successfully fetched current data, now fetch forecast
-      fetchForecast(loc);
+      fetchForecast(loc); 
 
     } catch (err) {
       console.error("Fetch error:", err);
-      if (err.message.includes('Failed to fetch')) {
+      // ENHANCED ERROR REPORTING: Check for specific "Location not found" message
+      if (err.message.includes('Location not found')) {
+        setError("Location not found. Please verify spelling or use the format: City, State/Region Code, Country Code (e.g., 'Paris, FR').");
+      } else if (err.message.includes('Failed to fetch')) {
         setError('Could not connect to Node.js backend server. Please ensure server.js is running on port 8080.');
       } else {
+        // Display the specific message returned by the backend's catch block
         setError(`Data fetch failed: ${err.message}`);
       }
-      setData(initialDashboardData);
+      setData(initialDashboardData); 
       setForecastData([]); // Clear forecast on error
 
     } finally {
@@ -287,7 +316,7 @@ const App = () => {
   // Initial data load when component mounts
   useEffect(() => {
     fetchCurrentConditions(locationInput);
-  }, [fetchCurrentConditions]);
+  }, [fetchCurrentConditions]); 
 
   // Handler for form submission
   const handleSubmit = (e) => {
@@ -299,7 +328,13 @@ const App = () => {
   const aqiClassName = getAqiColor(airQuality.status);
   const backgroundClasses = getWeatherBackground(weather.condition);
 
-  const formatTemp = (temp) => temp !== null ? temp.toFixed(1) : '--';
+  // Apply unit conversion logic to current temperature
+  const currentTempF = weather.temperatureF;
+  const displayTemp = unit === 'C' && currentTempF !== null 
+                      ? convertToC(currentTempF).toFixed(1) 
+                      : (currentTempF !== null ? currentTempF.toFixed(1) : '--');
+  const displayUnit = unit === 'C' ? '°C' : '°F';
+  
   const formatWind = (wind) => wind !== null ? wind.toFixed(1) : '--';
 
   const WeatherIcon = getWeatherIcon(weather.condition);
@@ -308,19 +343,20 @@ const App = () => {
 
   return (
     // Applied the dynamic background class here
-    <div className={`min-h-screen flex flex-col items-center p-4 sm:p-8 font-sans transition-colors duration-500 ${backgroundClasses}`}>
+    <div className={`min-h-screen flex flex-col items-center p-4 sm:p-8 font-sans transition-colors duration-500 bg-gradient-to-br ${backgroundClasses}`}>
 
       {/* Header and Search */}
       <div className="w-full max-w-4xl bg-white shadow-xl rounded-2xl p-6 mb-8">
         <h1 className="text-3xl font-bold text-center text-gray-800">EcoWatch Environmental Dashboard</h1>
         <p className="text-center text-sm text-gray-500 mt-1 mb-6">Full-Stack Demo: React Frontend calling Node.js Backend.</p>
 
-        <form onSubmit={handleSubmit} className="flex max-w-md mx-auto">
+        <form onSubmit={handleSubmit} className="flex max-w-xl mx-auto">
           <input
             type="text"
             value={locationInput}
             onChange={(e) => setLocationInput(e.target.value)}
-            placeholder="Enter City, State/Region Code, Country Code (e.g., 'Paris, FR')"
+            // FIX: Update placeholder to guide user to the exact format needed for disambiguation
+            placeholder="City, State/Region Code, Country Code (e.g., 'Paris, FR')"
             className="flex-grow p-3 border-2 border-gray-300 rounded-l-xl focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150"
             required
             disabled={loading}
@@ -350,9 +386,9 @@ const App = () => {
       {/* Error Message Display */}
       {error && (
         <div className="w-full max-w-4xl p-4 mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg shadow-md">
-          <p className="font-semibold">Connection Required!</p>
+          <p className="font-semibold">Error!</p>
           <p className="text-sm">{error}</p>
-          <p className="text-xs mt-2">To fix: Go to the 'backend/' folder, ensure API key is set, and run `node server.js`.</p>
+          <p className="text-xs mt-2">To fix: Ensure your backend is running and the format is correct.</p>
         </div>
       )}
 
@@ -362,9 +398,35 @@ const App = () => {
 
         {/* 1. Weather Conditions Card */}
         <Card title="Weather Conditions" icon={Cloud} className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300">
-          <div className="flex items-center justify-between my-4">
-            <span className="text-6xl font-extrabold text-blue-800">{formatTemp(weather.temperatureF)}°F</span>
-            <WeatherIcon size={64} className="text-blue-500" />
+          <div className="flex flex-col items-start my-4">
+              {/* Unit Toggle and Temperature Display Container */}
+              <div className="flex items-center justify-between w-full">
+                  <div className="flex flex-col items-start">
+                      {/* Unit Toggle */}
+                      <div className="flex items-center bg-gray-100 rounded-xl p-1 border border-gray-300 mb-2">
+                          <button 
+                              onClick={() => setUnit('C')} 
+                              className={`px-2 py-1 text-xs font-bold rounded-lg transition-colors ${unit === 'C' ? 'bg-blue-500 text-white shadow' : 'text-gray-600 hover:bg-gray-200'}`}
+                              aria-pressed={unit === 'C'}
+                          >
+                              °C
+                          </button>
+                          <button 
+                              onClick={() => setUnit('F')} 
+                              className={`px-2 py-1 text-xs font-bold rounded-lg transition-colors ${unit === 'F' ? 'bg-blue-500 text-white shadow' : 'text-gray-600 hover:bg-gray-200'}`}
+                              aria-pressed={unit === 'F'}
+                          >
+                              °F
+                          </button>
+                      </div>
+                      {/* Large Temperature Display */}
+                      <span className="text-6xl font-extrabold text-blue-800">
+                          {displayTemp}{displayUnit}
+                      </span>
+                  </div>
+                  {/* Weather Icon */}
+                  <WeatherIcon size={64} className="text-blue-500" />
+              </div>
           </div>
           <p className="text-xl font-semibold text-gray-800 mb-4">{weather.condition}</p>
 
@@ -415,7 +477,7 @@ const App = () => {
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4">
                   {forecastData.map((day, index) => (
-                      <ForecastDay key={index} day={day} />
+                      <ForecastDay key={index} day={day} unit={unit} />
                   ))}
               </div>
           </div>
