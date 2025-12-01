@@ -1,18 +1,20 @@
 [build]
 
-FIX: Corrected base directory to point to the nested 'ecowatch/frontend' folder
+FIX: Including the outer 'ecowatch' folder in the base path to match the repository structure
 
 base    = "ecowatch/frontend"
 
-Functions Directory: Now relative to the new base (which is correct for the deployment)
+Functions directory (relative to the repository root)
+
+NOTE: The functions folder must be at /ecowatch/functions/ in your repository root
 
 functions = "functions"
 
-Build Command:
+Build command to execute (relative to the base directory)
 
 command = "npm run build"
 
-Publish Directory:
+Publish directory (relative to the base directory, which is now 'ecowatch/frontend')
 
 publish = "build"
 
@@ -21,7 +23,7 @@ Configuration for Functions Runtime Environment
 [functions]
 node_bundler = "esbuild"
 
-CRITICAL STEP: API Endpoint Rewrites (Functions are resolved relative to the base)
+CRITICAL: API Endpoint Rewrites (for Netlify to call the functions securely)
 
 [[redirects]]
 from = "/api/v1/environment/current"
