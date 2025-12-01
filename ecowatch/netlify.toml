@@ -1,12 +1,12 @@
 [build]
 
-FIX: Including the outer 'ecowatch' folder in the base path to match the repository structure
+Assuming the root of your repository (where Netlify starts) contains the 'frontend' and 'functions' folders.
 
-base    = "ecowatch/frontend"
+FIX: Simplifying base to "frontend" to match standard Netlify deployment practice.
 
-Functions directory (relative to the repository root)
+base    = "frontend"
 
-NOTE: The functions folder must be at /ecowatch/functions/ in your repository root
+Functions directory (relative to the repository root, which is correct if the functions folder is at the root)
 
 functions = "functions"
 
@@ -14,7 +14,7 @@ Build command to execute (relative to the base directory)
 
 command = "npm run build"
 
-Publish directory (relative to the base directory, which is now 'ecowatch/frontend')
+Publish directory (relative to the base directory)
 
 publish = "build"
 
