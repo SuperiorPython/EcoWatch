@@ -2,11 +2,11 @@
 
 Assuming the root of your repository (where Netlify starts) contains the 'frontend' and 'functions' folders.
 
-FIX: Simplifying base to "frontend" to match standard Netlify deployment practice.
+FIX: Setting the base to account for the nested structure you likely have, ensuring Netlify finds the React app.
 
-base    = "frontend"
+base    = "ecowatch/frontend"
 
-Functions directory (relative to the repository root, which is correct if the functions folder is at the root)
+Functions directory (relative to the repository root, where the functions folder is located)
 
 functions = "functions"
 
